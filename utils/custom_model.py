@@ -87,3 +87,38 @@ def create_model(config_path, env):
         **sac_specific  # 添加SAC专用参数
     )
     return model
+
+def load_model(config_path, env, model_path):
+    """
+    加载训练好的模型，复用 create_model 的策略配置逻辑。
+    
+    Args:
+        config_path (str): 算法配置文件路径（algs.yaml）
+        env (gym.Env): 环境实例
+        model_path (str): 模型文件路径（.zip）
+    
+    Returns:
+        model: 加载的模型实例
+    """
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    train_cfg = config['training']
+    algorithm = train_cfg['algorithm'].lower()
+
+    # 算法到模型类的映射
+    model_map = {
+        'ppo': PPO,
+        'td3': TD3,
+        'sac': SAC
+    }
+    
+    if algorithm not in model_map:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+    # 直接加载模型（Stable-Baselines3 的 load 方法）
+    model = model_map[algorithm].load(
+        model_path,
+        env=env,
+        device=train_cfg['device']
+    )
+    return model
