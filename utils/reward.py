@@ -1,5 +1,24 @@
 import numpy as np
 
+def unmarshal_state(state):
+    """
+    将状态恢复为未归一化的形式
+    Args:
+        state: 归一化后的状态（13维数组）
+    Returns:
+        unmarshalled_state: 自机状态（13维数组）
+    """
+    # 归一化范围
+    min_val = -100
+    max_val = 100
+
+    # 恢复自机状态
+    unmarshalled_state = np.zeros(13)
+    unmarshalled_state[0:3] = (state[0:3] + 1) / 2 * (max_val - min_val) + min_val
+    unmarshalled_state[3:12] = state[3:12]  # 保持原样
+    unmarshalled_state[12] = state[12]
+
+    return unmarshalled_state.astype(np.float64)        
 
 def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     """
@@ -15,12 +34,23 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     9-11: angular velocities ω,β,η (rad/s)
     12: health
     """
-    # 健康度奖励（保持不变）
+
+    prev_my_state = unmarshal_state(prev_my_state)
+    prev_enemy_state = unmarshal_state(prev_enemy_state)
+    my_state = unmarshal_state(my_state)
+    enemy_state = unmarshal_state(enemy_state)
+
+    print("prev_my_state:", prev_my_state)
+    print("prev_enemy_state:", prev_enemy_state)
+    print("my_state:", my_state)
+    print("enemy_state:", enemy_state)
+
+    # 1.健康度奖励
     enemy_health_lost = prev_enemy_state[12] - enemy_state[12]
     my_health_lost = prev_my_state[12] - my_state[12]
-    if enemy_health_lost ==0:
+    if enemy_health_lost == 0:
         enemy_health_lost = 0.01
-    if my_health_lost ==0:
+    if my_health_lost == 0:
         my_health_lost = 0.01
     ENEMY_HEALTH_REWARD = 200
     MY_HEALTH_PENALTY = 40
@@ -28,7 +58,7 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
         ENEMY_HEALTH_REWARD * enemy_health_lost - MY_HEALTH_PENALTY * my_health_lost
     )
 
-    # 距离变化奖励（新增：变近奖励，变远惩罚）
+    # 2.距离变化奖励（新增：变近奖励，变远惩罚）（整体根据势能函数的设计进行）
     prev_pos_diff = prev_my_state[0:3] - prev_enemy_state[0:3]
     curr_pos_diff = my_state[0:3] - enemy_state[0:3]
 
@@ -37,16 +67,16 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     dist_change = prev_dist - curr_dist  # 正数表示变近
 
     # 距离奖励参数
-    DISTANCE_REWARD_SCALE = 2.0  # 比健康奖励小的权重
+    DISTANCE_REWARD_SCALE = 6.0  
     reward_distance = DISTANCE_REWARD_SCALE * dist_change
     # 如果距离过大 给予额外惩罚
     if curr_dist > 30:
         reward_distance -= 2.0
     # 加大惩罚
     if reward_distance < 0:
-        reward_distance *= 3.0
+        reward_distance *= 9.0
 
-    # 角度偏差变化奖励（新增：偏差减小奖励，增大惩罚）
+    # 3.角度偏差变化奖励（新增：偏差减小奖励，增大惩罚）
     def calculate_angle_diff(state, enemy_pos):
         """计算当前状态与敌人的角度偏差"""
         enemy_dir = enemy_pos - state[0:3]
@@ -66,7 +96,7 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     angle_change = prev_angle_diff - curr_angle_diff  # 正数表示偏差减小
 
     # 角度变化奖励参数
-    ANGLE_CHANGE_SCALE = 100.0  # 适中权重
+    ANGLE_CHANGE_SCALE = 150.0  # 适中权重
     reward_angle_change = ANGLE_CHANGE_SCALE * angle_change
     
     # 如果角度偏差小于0.1，给予额外奖励

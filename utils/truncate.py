@@ -47,7 +47,7 @@ def check_truncation(my_state, enemy_state):
         return np.arccos(np.clip(dot_product, -1.0, 1.0))
     
     angle_diff = calculate_angle_diff(my_state, enemy_state)
-    MAX_ALLOWED_ANGLE = np.pi/2  # 60度
+    MAX_ALLOWED_ANGLE = np.pi/4  # 45度（弧度）
     
     if angle_diff > MAX_ALLOWED_ANGLE:
         return True

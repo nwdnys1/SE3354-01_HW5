@@ -12,7 +12,7 @@ def demo():
     env = DummyVecEnv([lambda: Monitor(base_env)])  # 使用DummyVecEnv包装
     
     # 加载训练好的模型
-    model_path = "./model/model_10000_steps.zip"
+    model_path = "./model/model_300000_steps.zip"
     model = custom_model.load_model(config_path='./config/algs.yaml', env=env, model_path=model_path)
     
     # 演示模型

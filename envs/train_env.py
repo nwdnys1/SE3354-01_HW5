@@ -86,6 +86,10 @@ class TrainEnv(gymnasium.Env):
         # Check for truncation first
         truncated = truncate.check_truncation(self.my_state, self.enemy_state)
 
+        #print(f"Agent action: {agent_action}")
+        # 硬编码action为0 0 0 1
+        # agent_action = np.array([0.0, 0.0, -1.0, 0.0], dtype=np.float64)
+
         # Marshal agent actions into real actions and send
         # First marshal unified actions into platform actions
         real_action = action.marshal_action(agent_action)
