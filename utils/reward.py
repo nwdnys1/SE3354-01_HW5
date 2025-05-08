@@ -40,10 +40,10 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     my_state = unmarshal_state(my_state)
     enemy_state = unmarshal_state(enemy_state)
 
-    print("prev_my_state:", prev_my_state)
-    print("prev_enemy_state:", prev_enemy_state)
-    print("my_state:", my_state)
-    print("enemy_state:", enemy_state)
+    # print("prev_my_state:", prev_my_state)
+    # print("prev_enemy_state:", prev_enemy_state)
+    # print("my_state:", my_state)
+    # print("enemy_state:", enemy_state)
 
     # 1.健康度奖励
     enemy_health_lost = prev_enemy_state[12] - enemy_state[12]
@@ -52,7 +52,7 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
         enemy_health_lost = 0.01
     if my_health_lost == 0:
         my_health_lost = 0.01
-    ENEMY_HEALTH_REWARD = 200
+    ENEMY_HEALTH_REWARD = 400
     MY_HEALTH_PENALTY = 40
     reward_health = (
         ENEMY_HEALTH_REWARD * enemy_health_lost - MY_HEALTH_PENALTY * my_health_lost
@@ -69,12 +69,13 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     # 距离奖励参数
     DISTANCE_REWARD_SCALE = 6.0  
     reward_distance = DISTANCE_REWARD_SCALE * dist_change
-    # 如果距离过大 给予额外惩罚
-    if curr_dist > 30:
-        reward_distance -= 2.0
-    # 加大惩罚
+    # 如果远离了，加大惩罚
     if reward_distance < 0:
-        reward_distance *= 9.0
+        reward_distance *= 10.0
+    # 如果距离小于50，给予额外奖励
+    if reward_distance > 0 and curr_dist < 50:
+        reward_distance += 5.0
+
 
     # 3.角度偏差变化奖励（新增：偏差减小奖励，增大惩罚）
     def calculate_angle_diff(state, enemy_pos):
@@ -96,16 +97,16 @@ def calculate_reward(prev_my_state, prev_enemy_state, my_state, enemy_state):
     angle_change = prev_angle_diff - curr_angle_diff  # 正数表示偏差减小
 
     # 角度变化奖励参数
-    ANGLE_CHANGE_SCALE = 150.0  # 适中权重
+    ANGLE_CHANGE_SCALE = 120.0  # 适中权重
     reward_angle_change = ANGLE_CHANGE_SCALE * angle_change
     
     # 如果角度偏差小于0.1，给予额外奖励
-    if curr_angle_diff < 0.1:
-        reward_angle_change += 1.0
+    if angle_change < 0.001 and angle_change > 0:
+        reward_angle_change += 3.0
 
     # 加大惩罚
     if reward_angle_change < 0:
-        reward_angle_change *= 3.0
+        reward_angle_change *= 6.0
 
     # 总奖励
     total_reward = reward_health + reward_distance + reward_angle_change

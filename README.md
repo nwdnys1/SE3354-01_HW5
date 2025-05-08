@@ -10,6 +10,11 @@
    - 偏航角度的变化量（-1 到 1），正为顺时针，负为逆时针
    - 上面这几个值设置为超过 1 的时候、也不会有什么影响
 
+3. nohup python3 main.py > output.log 2>&1 &
+
+   - ps aux | grep main.py
+   - kill -9 12345
+
 # Train_Single
 
 This is the code template for students training agent using python. Beta test.
